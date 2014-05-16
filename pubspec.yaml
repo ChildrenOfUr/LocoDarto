@@ -1,0 +1,12 @@
+name: LocoDarto
+version: 0.0.1
+author: coU Development Team
+description: 'A map builder and decorator for the online game: Children of Ur'
+homepage: ChildrenOfUr.github.io
+dependencies:
+  browser: any
+  html5_dnd: any
+  libld:
+    git:
+      ref: master
+      url: https://github.com/ChildrenOfUr/libld.git

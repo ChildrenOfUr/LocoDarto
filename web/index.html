@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+  	<meta charset="utf-8">
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocoDarto</title>
+    
+    <!-- Import Stylesheets -->
+	<link rel="stylesheet" href="./css/main.css">
+	<!--Import Stylesheets -->
+
+  </head>
+ 
+  <body>
+  <form>
+  	<input id="fileLoad" type="file">
+  </form>
+  <label><input id="gravity" type="checkbox" checked="true">Gravity on</label>
+  	<div id="MainScreen">
+	  	<div id="GameScreenParent">
+		  	<div id="CurrentLocation">
+	        	<img src="./assets/system/map_icon.svg" id="MapGlyph" width="38" height="38">
+	          		<div>
+	            		Current Location:
+	            		<div id="Location">
+	            		</div>
+	          		</div>
+	        </div>
+	  		<div id="GameScreen"></div>
+	  	</div>
+	    <div id="ToolBox" class="shadow">
+	    	<div style="text-align: center;">Toolbox</div>
+	    	<hr>
+	    	<div id="ToolShelf">
+	    		<div>
+			    	<span>Label: </span>
+			    	<input id="LocationInput" type="text" placeholder="street name" value="New Street">
+		    	</div>
+		    	<hr>
+		    	<div id="GradientBox">
+		    		<div>
+			    		<span>Start color: </span>
+			    		<input id="StartColor" type="text" placeholder="hex code" value="#A7C8D9">
+		    		</div>
+		    		<div>
+			    		<span>End color: </span>
+			    		<input id="EndColor" type="text" placeholder="hex code" value="#D9B166">
+		    		</div>
+		    	</div>
+		    	<hr>
+		    	<div id="SizeBox">
+		    		<div>
+			    		<span>Width: </span>
+			    		<input id="Width" type="number" placeholder="integer" value="3000">
+		    		</div>
+		    		<div>
+			    		<span>Height: </span>
+			    		<input id="Height" type="number" placeholder="integer" value="1000">
+			    	</div>
+			    </div>
+			    <hr>
+		    	<div id="LayersBox">
+		    		<div>
+		    			<span>Layers: </span>
+						<ul id="layerList"></ul>
+		    		</div>
+		    		<div>
+		    			<div id="addNewLayer" style="text-align: center;" class="shadow">Add New Layer</div>
+		    		</div>
+			    </div>
+			    <hr>
+			    <div>
+			    	<label><input id="platformCheckbox" type="checkbox">Edit Platform Lines</label>
+			    </div>
+			</div>
+	    	<div style="text-align: center;"><div id="Generate" class="shadow">Generate</div></div>
+	    </div>
+  	</div>
+    
+    
+    <script type="application/dart" src="index.dart"></script>
+    <!-- for this next line to work, your pubspec.yaml file must have a dependency on 'browser' -->
+    <script src="packages/browser/dart.js"></script>
+  </body>
+</html>
