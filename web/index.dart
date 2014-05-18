@@ -19,7 +19,7 @@ part 'ui.dart';
 TextInputElement startColorInput, endColorInput, locationInput;
 NumberInputElement widthInput, heightInput;
 DivElement location;
-String startColor, endColor;
+String startColor, endColor, currentLayer = "middleground";
 int width = 3000 , height = 1000;
 DivElement gameScreen, gradientLayer, layers;
 Rectangle bounds;
@@ -147,6 +147,12 @@ main()
     	CurrentPlayer.doPhysicsApply = gravity.checked;
     });
     
+    DivElement palette = querySelector("#Palette") as DivElement;
+	ImageElement deco = new ImageElement(src:'../web/assets/sprites/decos/alakol_beach_1.png');
+	deco.style.maxWidth = "50px";
+	palette.append(deco);
+	setupListener(deco);
+    
     ui.init();
     playerInput = new Input();
     playerInput.init();
@@ -156,6 +162,55 @@ main()
     	CurrentPlayer = new Player();
 		CurrentPlayer.loadAnimations().then((_) => gameLoop(0.0));
     });
+}
+
+void setupListener(ImageElement deco)
+{
+	ImageElement drag = null;
+	deco.onClick.listen((MouseEvent event)
+	{
+		drag = new ImageElement(src:deco.src);
+		drag.style.position = "absolute";
+		drag.style.top = event.client.y.toString()+"px";
+		drag.style.left = event.client.x.toString()+"px";
+		drag.style.border = "1px dashed black";
+		document.body.append(drag);
+		
+		Element layer = querySelector("#$currentLayer");
+		print("looking for $currentLayer");
+		layer.onClick.listen((MouseEvent event)
+    	{
+			if(drag == null)
+				return;
+			
+    		num x,y;
+    		if((event.target as Element).id != layer.id)
+    		{
+    			y = (event.target as Element).offset.top+event.layer.y+currentStreet.offsetY;
+    			x = (event.target as Element).offset.left+event.layer.x+currentStreet.offsetX;
+    		}
+    		else
+    		{
+    			y = event.layer.y+currentStreet.offsetY;
+    			x = event.layer.x+currentStreet.offsetX;
+    		}
+    		drag.style.top = y.toString()+"px";
+            drag.style.left = x.toString()+"px";
+            drag.style.border = "";
+            layer.append(drag.clone(false));
+            drag.remove();
+            drag == null;
+            event.stopImmediatePropagation();
+    	});
+	});
+	document.body.onMouseMove.listen((MouseEvent event)
+	{
+		if(drag == null)
+			return;
+		
+		drag.style.top = (event.page.y+1).toString()+"px";
+        drag.style.left = event.page.x.toString()+"px";
+	});
 }
 
 void loadStreet(Map streetData)
@@ -198,8 +253,8 @@ void showLineCanvas()
 
 	lineCanvas.onMouseDown.listen((MouseEvent event)
 	{
-		startX = event.client.x+currentStreet.offsetX.toInt();
-		startY = event.client.y+currentStreet.offsetY.toInt();
+		startX = event.layer.x+currentStreet.offsetX.toInt();
+		startY = event.layer.y+currentStreet.offsetY.toInt();
 	});
 	lineCanvas.onMouseMove.listen((MouseEvent event)
 	{
@@ -207,7 +262,7 @@ void showLineCanvas()
 			return;
 		
 		Point start = new Point(startX,startY);
-		Point end = new Point(event.client.x+currentStreet.offsetX.toInt(),event.client.y+currentStreet.offsetY.toInt());
+		Point end = new Point(event.layer.x+currentStreet.offsetX.toInt(),event.layer.y+currentStreet.offsetY.toInt());
 		Platform temporary = new Platform("temp",start,end);
 		repaint(lineCanvas,temporary);
 	});
@@ -216,8 +271,20 @@ void showLineCanvas()
 		if(startX == -1)
 			return;
 		
+		int endX = event.layer.x+currentStreet.offsetX.toInt();
+		int endY = event.layer.y+currentStreet.offsetY.toInt();
+		//make sure the startX is < endX
+		if(endX < startX)
+		{
+			int tempX = endX;
+			int tempY = endY;
+			endX = startX;
+			startX = tempX;
+			endY = startY;
+			startY = tempY;
+		}
 		Point start = new Point(startX,startY);
-		Point end = new Point(event.client.x+currentStreet.offsetX.toInt(),event.client.y+currentStreet.offsetY.toInt());
+		Point end = new Point(endX,endY);
 		Platform newPlat = new Platform("plat_"+rand.nextInt(10000000).toString(),start,end);
 		currentStreet.platforms.add(newPlat);
 		currentStreet.platforms.sort((x,y) => x.compareTo(y));
@@ -249,7 +316,9 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 {
 	Element layerList = querySelector("#layerList");
 	
-	LIElement item = new LIElement();
+	LIElement item = new LIElement()..style.background = "gray";
+	item.onClick.listen((_) => setCurrentLayer(item));
+	
 	SpanElement handle = new SpanElement()..text = "::";
 	
 	DivElement checkboxWrapper = new DivElement()..classes.add("checkbox_wrapper");
@@ -257,10 +326,12 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 	LabelElement label = new LabelElement();
 	
 	DivElement layerTitle = new DivElement()..id = "title"..classes.add("layerTitle");
-	if(layerName != null)
-		layerTitle.text = layerName;
-	else
-		layerTitle.text = "newLayer"+rand.nextInt(100000).toString();
+	if(layerName == null)
+		layerName = "newLayer"+rand.nextInt(100000).toString();
+	
+	layerTitle.text = layerName;
+	item.id = layerName;
+	setCurrentLayer(item);
 	
 	DivElement layerWidth = new DivElement()..id = "width"..classes.add("layerTitle")..text = bounds.width.toString()+"px";
 	DivElement layerHeight = new DivElement()..id = "height"..classes.add("layerTitle")..text = bounds.height.toString()+"px";
@@ -289,10 +360,23 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 	
 	DivElement layer = new DivElement()
 		..id=layerTitle.text
+		..classes.add("streetCanvas")
 		..style.width = bounds.width.toString()+"px"
-		..style.height = bounds.height.toString()+"px";
+		..style.height = bounds.height.toString()+"px"
+		..attributes["ground_y"] = "0";
 	
 	layers.append(layer);
+}
+
+void setCurrentLayer(Element item)
+{
+	querySelector("#layerList").children.forEach((Element element)
+	{
+		element.style.background = "";
+	});
+	currentLayer = item.id;
+	item.style.background = "gray";
+	print("currentLayer: $currentLayer");
 }
 
 void edit(DivElement displayElement, TextInputElement editElement, String id)
@@ -306,23 +390,29 @@ void edit(DivElement displayElement, TextInputElement editElement, String id)
 	{
 		if(event.charCode == 13)
 		{
+			Element layerList = querySelector("#layerList");
+            		
 			//update existing div on screen
 			if(displayElement.id == "width")
 			{
 				String newWidth = editElement.value;
 				if(!newWidth.endsWith("px"))
 					newWidth += "px";
-				layers.querySelector("#$id").style.width = newWidth;
+				layerList.querySelector("#$id").style.width = newWidth;
 			}
 			if(displayElement.id == "height")
 			{
 				String newHeight = editElement.value;
 				if(!newHeight.endsWith("px"))
 					newHeight += "px";
-				layers.querySelector("#$id").style.height = newHeight;
+				layerList.querySelector("#$id").style.height = newHeight;
 			}
 			if(displayElement.id == "title")
+			{
 				layers.querySelector("#$id").id = editElement.value;
+				layerList.querySelector("#$id").id = editElement.value;
+				setCurrentLayer(layerList.querySelector("#${editElement.value}"));
+			}
 			
 			editElement.style.display = "none";
 			displayElement.style.display = "inline-block";

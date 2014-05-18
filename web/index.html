@@ -13,11 +13,11 @@
   </head>
  
   <body>
-  <form>
-  	<input id="fileLoad" type="file">
-  </form>
-  <label><input id="gravity" type="checkbox" checked="true">Gravity on</label>
   	<div id="MainScreen">
+	  	<form style="display: inline;">
+	  		<input id="fileLoad" type="file">
+	  	</form>
+  		<label><input id="gravity" type="checkbox" checked="true">Gravity on</label>
 	  	<div id="GameScreenParent">
 		  	<div id="CurrentLocation">
 	        	<img src="./assets/system/map_icon.svg" id="MapGlyph" width="38" height="38">
@@ -75,6 +75,9 @@
 			    </div>
 			</div>
 	    	<div style="text-align: center;"><div id="Generate" class="shadow">Generate</div></div>
+	    </div>
+	    <div id="Palette">
+	    	<div>Palette</div>
 	    </div>
   	</div>
     
