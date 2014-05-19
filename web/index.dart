@@ -21,7 +21,7 @@ NumberInputElement widthInput, heightInput;
 DivElement location;
 String startColor, endColor, currentLayer = "middleground";
 int width = 3000 , height = 1000;
-DivElement gameScreen, gradientLayer, layers;
+DivElement gameScreen, layers;
 Rectangle bounds;
 Random rand = new Random();
 
@@ -49,14 +49,11 @@ gameLoop(num delta)
 main()
 {
 	gameScreen = querySelector("#GameScreen");
-	gradientLayer = new DivElement()..id = "gradient";
 	
 	layers = new DivElement()
 		..id = "layers"
 		..style.position = "absolute";
-	
-	layers.append(gradientLayer);
-	
+		
 	gameScreen.append(layers);
 	
 	startColorInput = querySelector("#StartColor") as TextInputElement;
@@ -601,10 +598,15 @@ Map generate()
 void updateBounds(num left, num top, num width, num height)
 {
 	bounds = new Rectangle(left,top,width,height);
+	updateGradient();
 }
 
 void updateGradient()
 {
+	Element gradientLayer = layers.querySelector("#gradient");
+	if(gradientLayer == null)
+		return;
+	
 	gradientLayer.style.width = bounds.width.toString() + "px";
 	gradientLayer.style.height = bounds.height.toString() + "px";
 	
