@@ -51,12 +51,13 @@ body {
 	background-color: #fff;
 	position:absolute;
 	width: 330px;
-	height: calc(100% - 100px);
+	height: calc(100% - 115px);
 	top: 50px;
 	right: 8px;
 	-moz-border-radius: 7px;
 	border-radius: 7px;
 	padding:5px;
+	overflow-y: scroll;
 }
 #ToolShelf {
 				
@@ -130,12 +131,17 @@ body {
 	background: #0495B9;
 	display: inline-block;
 	font-size: larger;
-	position: absolute;
-	bottom: 10px;
 	left: 30%;
 	right: 30%;
 	border-radius: 10px;
 	padding: 10px;
+}
+#GenerateParent {
+	text-align: center;
+	width: 330px;
+	right: 13px;
+	position: absolute;
+	bottom: 5px;
 }
 #CurrentLocation{
   position:absolute;
@@ -162,4 +168,14 @@ body {
 	-o-box-shadow: -1px 1px 3px 0px #4d8c8b;
 	-khtml-box-shadow: -1px 1px 3px 0px #4d8c8b;
 	box-shadow: -1px 1px 3px 0px #4d8c8b;
+}
+.dashedBorder {
+	border: 1px dashed black;
+}
+#DeleteDeco {
+	background: #0495B9;
+	color: white;
+	display: inline;
+	padding: 5px;
+	border-radius: 10px;
 }

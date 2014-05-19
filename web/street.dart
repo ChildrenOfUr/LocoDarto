@@ -64,7 +64,7 @@ class Street
 	Map<String,String> exits = new Map();
 	List<Platform> platforms = new List();
 	List<Ladder> ladders = new List();
-	double offsetX, offsetY;
+	Map<String,double> offsetX = {}, offsetY = {};
 	
 	Rectangle streetBounds;
   
@@ -324,14 +324,14 @@ class Street
 					canvasWidth = (canvas as CanvasElement).width;
 					canvasHeight = (canvas as CanvasElement).height;
 				}
-				offsetX = (canvasWidth - ui.gameScreenWidth) * currentPercentX;
-				offsetY = (canvasHeight - ui.gameScreenHeight) * currentPercentY;
+				offsetX[canvas.id] = (canvasWidth - ui.gameScreenWidth) * currentPercentX;
+				offsetY[canvas.id] = (canvasHeight - ui.gameScreenHeight) * currentPercentY;
 				
 				int groundY = int.parse(canvas.attributes['ground_y']);
-                offsetY += groundY;
+                offsetY[canvas.id] += groundY;
 				
 				//translateZ(0) forces the gpu to render the transform
-				transforms[canvas.id+"translateZ(0) translateX("+(-offsetX).toString()+"px) translateY("+(-offsetY).toString()+"px)"] = canvas;
+				transforms[canvas.id+"translateZ(0) translateX("+(-offsetX[canvas.id]).toString()+"px) translateY("+(-offsetY[canvas.id]).toString()+"px)"] = canvas;
 			}
 			//try to bundle DOM writes together for performance.
 			transforms.forEach((String transform, Element canvas)
