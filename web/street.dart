@@ -204,11 +204,16 @@ class Street
 						d.style.zIndex = z.toString();
 						String transform = "";
 						if(deco['h_flip'] != null && deco['h_flip'] == true)
-							transform += "scale(-1,1)";
+							d.classes.add("flip");
 						if(deco['r'] != null)
 							transform += " rotate("+deco['r'].toString()+"deg)";
 						d.style.transform = transform;
-						decoCanvas.append(d.clone(false));
+						
+						ImageElement clone = d.clone(false);
+						decoCanvas.append(clone);
+						
+						clone.classes.add("deco");
+                        clone.onClick.listen((_) => editDetails(clone));
 					}
 				}
 				

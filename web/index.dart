@@ -20,10 +20,11 @@ TextInputElement startColorInput, endColorInput, locationInput;
 NumberInputElement widthInput, heightInput;
 DivElement location;
 String startColor, endColor, currentLayer = "middleground";
-int width = 3000 , height = 1000;
+int width = 3000 , height = 1000, decoLoadOffset = 0;
 DivElement gameScreen, layers;
 Rectangle bounds;
 Random rand = new Random();
+SortableGroup sortGroup;
 
 class Deco
 {
@@ -108,7 +109,12 @@ main()
 		generateButton.classes.add("shadow");
 	});
     
-    SortableGroup sortGroup = new SortableGroup(handle: 'span');
+    sortGroup = new SortableGroup(handle: 'span');
+    sortGroup.onSortUpdate.listen((SortableEvent event)
+	{
+		DivElement movedLayer = layers.querySelector("#${event.draggable.id}");
+		movedLayer.parent.insertBefore(movedLayer, movedLayer.parent.children[event.newPosition.index+1]);
+	});
     
     DivElement addNewLayer = querySelector("#addNewLayer");
     addNewLayer.onMouseDown.listen((_)
@@ -117,7 +123,7 @@ main()
 	});
     addNewLayer.onMouseUp.listen((_)
 	{
-    	newLayer(sortGroup);
+    	newLayer();
 		addNewLayer.classes.add("shadow");
 	});
     
@@ -132,8 +138,14 @@ main()
     	querySelector("#DecoDetails").hidden = true;
 		deleteDeco.classes.add("shadow");
 	});
+    
+    CheckboxInputElement flipDeco = querySelector("#FlipDeco") as CheckboxInputElement;
+    flipDeco.onChange.listen((_)
+	{
+    	querySelector(".deco.dashedBorder").classes.toggle("flip");
+	});
         
-    newLayer(sortGroup, "middleground");
+    newLayer("middleground");
     
     CheckboxInputElement platformCheckbox = querySelector("#platformCheckbox") as CheckboxInputElement;
     platformCheckbox.onChange.listen((_)
@@ -150,6 +162,10 @@ main()
     InputElement fileLoad = querySelector("#fileLoad") as InputElement;
     fileLoad.onChange.listen((_)
 	{
+    	//the user hit cancel
+    	if(fileLoad.files.length == 0)
+    		return;
+    	
 		File file = fileLoad.files.first;
 		FileReader reader = new FileReader();
 		reader.onLoad.listen((_)
@@ -168,22 +184,14 @@ main()
     
     DivElement palette = querySelector("#Palette");
     DivElement shelf = querySelector("#Shelf");
-    String dir = "scenery"; //set to spritesheets to get a list of sprites instead
-	//can also set length and offset to reduce the number of returned results
-    HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&length=300").then((String result)
+    
+    loadDecos(shelf);
+    shelf.onScroll.listen((_)
     {
-    	List results = JSON.decode(result);
-    	results.forEach((String spriteUrl)
-		{
-    		ImageElement deco = new ImageElement();
-    		deco.title = spriteUrl.substring(spriteUrl.lastIndexOf("/")+1);
-    		deco.classes.add("paletteItem");
-			deco.src = spriteUrl;
-        	deco.style.maxWidth = "50px";
-        	deco.style.maxHeight = "100px";
-        	shelf.append(deco);
-        	setupListener(deco);
-		});
+    	if((shelf.scrollHeight - shelf.offsetHeight - shelf.scrollTop).abs() < 50)
+    	{
+    		loadDecos(shelf, offset:decoLoadOffset);
+    	}
     });
     
     TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
@@ -210,6 +218,27 @@ main()
     	CurrentPlayer = new Player();
 		CurrentPlayer.loadAnimations().then((_) => gameLoop(0.0));
     });
+}
+
+//dir is the name of the directory relative to listSprites.php from which to load images
+void loadDecos(Element container, {String dir:"scenery", int offset:0, length:30})
+{
+    HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&offset=$offset&length=$length").then((String result)
+    {
+    	List results = JSON.decode(result);
+    	results.forEach((String spriteUrl)
+		{
+    		ImageElement deco = new ImageElement();
+    		deco.title = spriteUrl.substring(spriteUrl.lastIndexOf("/")+1);
+    		deco.classes.add("paletteItem");
+			deco.src = spriteUrl;
+        	deco.style.maxWidth = "50px";
+        	deco.style.maxHeight = "100px";
+        	container.append(deco);
+        	setupListener(deco);
+		});
+    });
+    decoLoadOffset += length;
 }
 
 void setupListener(ImageElement deco)
@@ -265,7 +294,7 @@ void setupListener(ImageElement deco)
 StreamSubscription xInputListener,yInputListener,zInputListener,wInputListener,hInputListener,rotateInputListener;
 
 void editDetails(ImageElement clone)
-{
+{	
 	//delete previous listeners so only one deco moves around
 	if(xInputListener != null)
 		xInputListener.cancel();
@@ -292,6 +321,7 @@ void editDetails(ImageElement clone)
 	if(clone.classes.contains("dashedBorder"))
 	{
 		decoDetails.hidden = false;
+		
 		InputElement xInput = (querySelector("#DecoX") as InputElement);
 		xInput.value = clone.style.left.replaceAll("px", "");
 		xInputListener = xInput.onInput.listen((_) => clone.style.left = xInput.value +"px");
@@ -311,8 +341,10 @@ void editDetails(ImageElement clone)
         hInputListener = hInput.onInput.listen((_) => clone.style.height = hInput.value +"px");
         InputElement rotateInput = (querySelector("#DecoRotate") as InputElement);
         rotateInput.value = getTransformAngle(clone.getComputedStyle().transform).toString();
-        rotateInputListener = rotateInput.onInput.listen((_) => clone.style.transform = "rotate("+rotateInput.value +"deg)");
-        		
+        rotateInputListener = rotateInput.onInput.listen((_) => clone.style.transform = "rotate("+rotateInput.value +"deg)");	
+		
+        (querySelector("#FlipDeco") as CheckboxInputElement).checked = clone.classes.contains("flip");
+			
 	}
 	//else we deselected it
 	else
@@ -335,6 +367,9 @@ num getTransformAngle(String tr)
 
 void loadStreet(Map streetData)
 {
+	layers.children.clear();
+    querySelector("#layerList").children.clear();
+        	
 	CurrentPlayer.doPhysicsApply = false;
 	currentStreet = new Street(streetData);
 	currentStreet.load().then((_)
@@ -350,7 +385,11 @@ void loadStreet(Map streetData)
     	height = currentStreet.streetBounds.height;
     	updateBounds(0,0,width,height);
     	location.text = locationInput.value;
-    	showLineCanvas();
+    	
+    	for(Map layer in new Map.from(currentStreet._data['dynamic']['layers']).values)
+		{
+			newLayer(layer["name"],true);
+		}
     	CurrentPlayer.doPhysicsApply = true;
 	});
 }
@@ -433,7 +472,7 @@ void repaint(CanvasElement lineCanvas, [Platform temporary])
 	context.stroke();
 }
 
-void newLayer(SortableGroup sortGroup, [String layerName])
+void newLayer([String layerName, bool loadStreet = false])
 {
 	Element layerList = querySelector("#layerList");
 	
@@ -442,16 +481,19 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 	
 	SpanElement handle = new SpanElement()..text = "::";
 	
-	DivElement checkboxWrapper = new DivElement()..classes.add("checkbox_wrapper");
-	CheckboxInputElement visible = new CheckboxInputElement()..classes.add("eye")..checked = true;
-	LabelElement label = new LabelElement();
-	
 	DivElement layerTitle = new DivElement()..id = "title"..classes.add("layerTitle");
 	if(layerName == null)
 		layerName = "newLayer"+rand.nextInt(100000).toString();
 	
 	layerTitle.text = layerName;
-	item.id = layerName;
+    item.id = layerName;
+    	
+	DivElement checkboxWrapper = new DivElement()..classes.add("checkbox_wrapper");
+	CheckboxInputElement visible = new CheckboxInputElement()..classes.add("eye")..checked = true;
+	visible.onChange.listen((_)
+	{
+		layers.querySelector("#$layerName").hidden = !visible.checked;
+	});
 	
 	DivElement layerWidth = new DivElement()..id = "width"..classes.add("layerTitle")..text = bounds.width.toString()+"px";
 	DivElement layerHeight = new DivElement()..id = "height"..classes.add("layerTitle")..text = bounds.height.toString()+"px";
@@ -465,7 +507,7 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 	layerHeight.onDoubleClick.listen((_) => edit(layerHeight,setHeight,layerTitle.text));
 	
 	checkboxWrapper.append(visible);
-	checkboxWrapper.append(label);
+	checkboxWrapper.append(new LabelElement());
 	item.append(handle);
 	item.append(checkboxWrapper);
 	item.append(setTitle);
@@ -478,17 +520,20 @@ void newLayer(SortableGroup sortGroup, [String layerName])
 	
 	sortGroup.install(item);
 	
-	DivElement layer = new DivElement()
-		..id=layerTitle.text
-		..classes.add("streetCanvas")
-		..style.position = "absolute"
-		..style.width = bounds.width.toString()+"px"
-		..style.height = bounds.height.toString()+"px"
-		..attributes["ground_y"] = "0";
+	if(!loadStreet)
+	{
+		DivElement layer = new DivElement()
+    		..id=layerTitle.text
+    		..classes.add("streetCanvas")
+    		..style.position = "absolute"
+    		..style.width = bounds.width.toString()+"px"
+    		..style.height = bounds.height.toString()+"px"
+    		..attributes["ground_y"] = "0";
+    	
+    	layers.append(layer);
+	}
 	
-	layers.append(layer);
 	setCurrentLayer(item);
-	
 	camera.dirty = true; //force a recalculation of any offset
 }
 
@@ -589,8 +634,12 @@ Map generate()
             	decoX -= bounds.width~/2;
             	decoY -= bounds.height;
             }
-            int rotation = getTransformAngle(deco.getComputedStyle().transform).toInt();
-			Map decoMap = {"filename":filename,"w":deco.clientWidth,"h":deco.clientHeight,"z":0,"x":decoX.toInt(),"y":decoY.toInt(),"r":rotation};
+			Map decoMap = {"filename":filename,"w":deco.clientWidth,"h":deco.clientHeight,"z":0,"x":decoX.toInt(),"y":decoY.toInt()};
+			int rotation = getTransformAngle(deco.getComputedStyle().transform).toInt();
+			if(rotation != 0)
+				decoMap["r"] = rotation;
+			if(deco.classes.contains("flip"))
+				decoMap["h_flip"] = true;
 			decosList.add(decoMap);
 		});
 		layer["decos"] = decosList;
