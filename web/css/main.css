@@ -193,3 +193,25 @@ body {
 	padding: 5px;
 	border-radius: 10px;
 }
+.LoadingBar{
+   background-color: #c5dc81;
+   width:0%;
+   border: 1px solid #fff;
+   -moz-border-radius: 5px;
+   border-radius: 5px;
+    transition-property: width;
+    transition-duration: 0.2s;
+    transition-timing-function: linear;
+    transition-delay: 0.5s;
+    -webkit-transition-property:width;
+    -webkit-transition-duration:0.2s;
+    -webkit-transition-timing-function:linear;
+    -webkit-transition-delay:0.5s;
+}
+.LoadingGroove {
+	display: inline-block;
+	width: 300px;
+}
+#DecoLoadingStatus {
+	white-space: nowrap;
+}

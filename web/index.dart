@@ -142,7 +142,17 @@ main()
     CheckboxInputElement flipDeco = querySelector("#FlipDeco") as CheckboxInputElement;
     flipDeco.onChange.listen((_)
 	{
-    	querySelector(".deco.dashedBorder").classes.toggle("flip");
+    	Element selectedDeco = querySelector(".deco.dashedBorder");
+    	//special case for deco that is rotated
+    	if(selectedDeco.style.transform.contains("rotate"))
+    	{
+    		if(flipDeco.checked)
+    			selectedDeco.style.transform += " scale(-1,1)";
+    		else if(!flipDeco.checked && selectedDeco.style.transform.contains("scale"))
+    			selectedDeco.style.transform = "rotate("+(getTransformAngle(selectedDeco.getComputedStyle().transform)+180).toString()+"deg)";
+    	}
+    	
+    	selectedDeco.classes.toggle("flip");
 	});
         
     newLayer("middleground");
@@ -184,9 +194,10 @@ main()
     
     DivElement palette = querySelector("#Palette");
     DivElement shelf = querySelector("#Shelf");
-    
+    ButtonElement loadAll = querySelector("#LoadAllDecos") as ButtonElement;
+   
     loadDecos(shelf);
-    shelf.onScroll.listen((_)
+    StreamSubscription scrollLoader = shelf.onScroll.listen((_)
     {
     	if((shelf.scrollHeight - shelf.offsetHeight - shelf.scrollTop).abs() < 50)
     	{
@@ -194,20 +205,16 @@ main()
     	}
     });
     
+    loadAll.onClick.first.then((_)
+    {
+    	loadAll.disabled = true;
+    	loadDecos(shelf,length:-1,offset:decoLoadOffset);
+    	scrollLoader.cancel();
+    	querySelector("#ScrollToLoad").hidden = true;
+    });
+    
     TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
-    paletteFilter.onInput.listen((_)
-	{
-    	if(paletteFilter.value != "")
-    	{
-    		palette.querySelectorAll(".paletteItem").forEach((Element deco)
-    		{
-    			if(deco.title.contains(paletteFilter.value))
-    				deco.style.display = "inline";
-    			else
-    				deco.style.display = "none";
-    		});
-    	}
-	});
+    paletteFilter.onInput.listen((_) => filterPalette());
     
     ui.init();
     playerInput = new Input();
@@ -221,7 +228,7 @@ main()
 }
 
 //dir is the name of the directory relative to listSprites.php from which to load images
-void loadDecos(Element container, {String dir:"scenery", int offset:0, length:30})
+void loadDecos(Element container, {String dir:"scenery", int offset:0, length:100})
 {
     HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&offset=$offset&length=$length").then((String result)
     {
@@ -238,7 +245,25 @@ void loadDecos(Element container, {String dir:"scenery", int offset:0, length:30
         	setupListener(deco);
 		});
     });
-    decoLoadOffset += length;
+    
+    if(length >= 0)
+    	decoLoadOffset += length;
+}
+
+void filterPalette()
+{
+	DivElement palette = querySelector("#Palette");
+	TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
+	if(paletteFilter.value != "")
+	{
+		palette.querySelectorAll(".paletteItem").forEach((Element deco)
+		{
+			if(deco.title.contains(paletteFilter.value))
+				deco.style.display = "inline";
+			else
+				deco.style.display = "none";
+		});
+	}
 }
 
 void setupListener(ImageElement deco)
@@ -331,20 +356,24 @@ void editDetails(ImageElement clone)
 		InputElement zInput = (querySelector("#DecoZ") as InputElement);
 		zInput.value = clone.style.zIndex;
 		zInputListener = zInput.onInput.listen((_) => clone.style.zIndex = zInput.value);
+		
 		InputElement wInput = (querySelector("#DecoW") as InputElement);
-        wInput.value = clone.style.width.replaceAll("px", "");
+        wInput.value = clone.style.maxWidth.replaceAll("px", "");
         wInput.placeholder = "default: " + clone.naturalWidth.toString();
-        wInputListener = wInput.onInput.listen((_) => clone.style.width = wInput.value +"px");
+        wInputListener = wInput.onInput.listen((_) => clone.style.maxWidth = wInput.value +"px");
         InputElement hInput = (querySelector("#DecoH") as InputElement);
-        hInput.value = clone.style.height.replaceAll("px", "");
+        hInput.value = clone.style.maxHeight.replaceAll("px", "");
         hInput.placeholder = "default: " + clone.naturalHeight.toString();
-        hInputListener = hInput.onInput.listen((_) => clone.style.height = hInput.value +"px");
+        hInputListener = hInput.onInput.listen((_) => clone.style.maxHeight = hInput.value +"px");
+        
         InputElement rotateInput = (querySelector("#DecoRotate") as InputElement);
         rotateInput.value = getTransformAngle(clone.getComputedStyle().transform).toString();
         rotateInputListener = rotateInput.onInput.listen((_) => clone.style.transform = "rotate("+rotateInput.value +"deg)");	
 		
         (querySelector("#FlipDeco") as CheckboxInputElement).checked = clone.classes.contains("flip");
-			
+		//special case for rotated deco which needs to also be flipped...
+        if(clone.style.transform.contains("rotate") && clone.classes.contains("flip"))
+        	clone.style.transform += " scale(-1,1)";        	
 	}
 	//else we deselected it
 	else

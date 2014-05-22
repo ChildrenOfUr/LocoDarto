@@ -204,7 +204,7 @@ class Street
 						d.style.zIndex = z.toString();
 						String transform = "";
 						if(deco['h_flip'] != null && deco['h_flip'] == true)
-							d.classes.add("flip");
+							transform += "scale(-1,1)";
 						if(deco['r'] != null)
 							transform += " rotate("+deco['r'].toString()+"deg)";
 						d.style.transform = transform;
