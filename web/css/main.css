@@ -24,7 +24,7 @@ body {
 #GameScreenParent {
 	position: relative;
 	width: calc(100% - 290px - 40px - 18px - 20px);
-	height: calc(100% - 180px);
+	height: calc(100% - 220px);
 	max-height: 900px;
 	top: 25px;
 	left: 10px;
@@ -65,7 +65,16 @@ body {
 #Palette {
 	position: absolute;
 	bottom: 0px;
-	height: 125px;
+	left: 10px;
+	height: 165px;
+	width: calc(100% - 290px - 40px - 18px - 20px);
+}
+#PaletteFilter {
+	display: inline-block;
+}
+#Shelf {
+	height: calc(100% - 2em);
+	overflow-y: scroll;
 }
 #layerList {
 	border: 1px solid black;

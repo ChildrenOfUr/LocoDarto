@@ -19,12 +19,21 @@ class Input
 	
 	init()
 	{
+		querySelectorAll("input").onFocus.listen((_)
+		{
+			ignoreKeys = true;
+		});
+		querySelectorAll("input").onBlur.listen((_)
+		{
+			ignoreKeys = false;
+		});
+		
 		//Handle player input
 	    //KeyUp and KeyDown are neccesary for preventing weird movement glitches
 	    //keyCode's could be configurable in the future
 	    document.onKeyDown.listen((KeyboardEvent k)
 		{
-			if ((k.keyCode == keys["UpBindingPrimary"] || k.keyCode == keys["UpBindingAlt"]) && !ignoreKeys) //up arrow or w and not typing
+	    	if ((k.keyCode == keys["UpBindingPrimary"] || k.keyCode == keys["UpBindingAlt"]) && !ignoreKeys) //up arrow or w and not typing
 				upKey = true;
 			if ((k.keyCode == keys["DownBindingPrimary"] || k.keyCode == keys["DownBindingAlt"]) && !ignoreKeys) //down arrow or s and not typing
 				downKey = true;

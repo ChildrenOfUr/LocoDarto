@@ -166,11 +166,40 @@ main()
     	CurrentPlayer.doPhysicsApply = gravity.checked;
     });
     
-    DivElement palette = querySelector("#Palette") as DivElement;
-	ImageElement deco = new ImageElement(src:'../web/assets/sprites/decos/alakol_beach_1.png');
-	deco.style.maxWidth = "50px";
-	palette.append(deco);
-	setupListener(deco);
+    DivElement palette = querySelector("#Palette");
+    DivElement shelf = querySelector("#Shelf");
+    String dir = "scenery"; //set to spritesheets to get a list of sprites instead
+	//can also set length and offset to reduce the number of returned results
+    HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&length=300").then((String result)
+    {
+    	List results = JSON.decode(result);
+    	results.forEach((String spriteUrl)
+		{
+    		ImageElement deco = new ImageElement();
+    		deco.title = spriteUrl.substring(spriteUrl.lastIndexOf("/")+1);
+    		deco.classes.add("paletteItem");
+			deco.src = spriteUrl;
+        	deco.style.maxWidth = "50px";
+        	deco.style.maxHeight = "100px";
+        	shelf.append(deco);
+        	setupListener(deco);
+		});
+    });
+    
+    TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
+    paletteFilter.onInput.listen((_)
+	{
+    	if(paletteFilter.value != "")
+    	{
+    		palette.querySelectorAll(".paletteItem").forEach((Element deco)
+    		{
+    			if(deco.title.contains(paletteFilter.value))
+    				deco.style.display = "inline";
+    			else
+    				deco.style.display = "none";
+    		});
+    	}
+	});
     
     ui.init();
     playerInput = new Input();
@@ -233,7 +262,7 @@ void setupListener(ImageElement deco)
 	});
 }
 
-StreamSubscription xInputListener,yInputListener,zInputListener,wInputListener,hInputListener;
+StreamSubscription xInputListener,yInputListener,zInputListener,wInputListener,hInputListener,rotateInputListener;
 
 void editDetails(ImageElement clone)
 {
@@ -248,6 +277,8 @@ void editDetails(ImageElement clone)
     	wInputListener.cancel();
 	if(hInputListener != null)
     	hInputListener.cancel();
+	if(rotateInputListener != null)
+		rotateInputListener.cancel();
 	
 	querySelectorAll(".deco").forEach((Element e) 
 	{
@@ -278,6 +309,9 @@ void editDetails(ImageElement clone)
         hInput.value = clone.style.height.replaceAll("px", "");
         hInput.placeholder = "default: " + clone.naturalHeight.toString();
         hInputListener = hInput.onInput.listen((_) => clone.style.height = hInput.value +"px");
+        InputElement rotateInput = (querySelector("#DecoRotate") as InputElement);
+        rotateInput.value = getTransformAngle(clone.getComputedStyle().transform).toString();
+        rotateInputListener = rotateInput.onInput.listen((_) => clone.style.transform = "rotate("+rotateInput.value +"deg)");
         		
 	}
 	//else we deselected it
@@ -285,6 +319,18 @@ void editDetails(ImageElement clone)
 	{
 		decoDetails.hidden = true;
 	}
+}
+
+num getTransformAngle(String tr)
+{
+	if(tr == "none")
+		return 0;
+	
+	List<String> values = tr.split('(')[1].split(')')[0].split(',');
+    num a = num.parse(values[0]);
+    num b = num.parse(values[1]);
+    num angle = (atan2(b, a) * (180/PI));
+    return angle;
 }
 
 void loadStreet(Map streetData)
@@ -543,7 +589,8 @@ Map generate()
             	decoX -= bounds.width~/2;
             	decoY -= bounds.height;
             }
-			Map decoMap = {"filename":filename,"w":deco.clientWidth,"h":deco.clientHeight,"z":0,"x":decoX.toInt(),"y":decoY.toInt()};
+            int rotation = getTransformAngle(deco.getComputedStyle().transform).toInt();
+			Map decoMap = {"filename":filename,"w":deco.clientWidth,"h":deco.clientHeight,"z":0,"x":decoX.toInt(),"y":decoY.toInt(),"r":rotation};
 			decosList.add(decoMap);
 		});
 		layer["decos"] = decosList;
