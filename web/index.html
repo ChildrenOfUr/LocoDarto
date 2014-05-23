@@ -37,27 +37,33 @@
 			    	<span>Label: </span>
 			    	<input id="LocationInput" type="text" placeholder="street name" value="New Street">
 		    	</div>
-		    	<hr>
-		    	<div id="GradientBox">
+		    	<div id="StatsBox">
+					<table>
+						<tbody>
+							<tr>
+								<td>Start Color</td>
+								<td>End Color</td>
+								<td>Width</td>
+								<td>Height</td>
+				    		</tr>
+				    		<tr>
+				   	  			<td><input id="StartColor" type="text" placeholder="hex code" value="#A7C8D9"></td>
+								<td><input id="EndColor" type="text" placeholder="hex code" value="#D9B166"></td>
+								<td><input id="Width" type="number" placeholder="integer" value="3000"></td>
+								<td><input id="Height" type="number" placeholder="integer" value="1000"></td>
+				    		</tr>
+				  		</tbody>
+					</table>
+				</div>
+			    <hr>
+			    <div id="ExitBox">
 		    		<div>
-			    		<span>Start color: </span>
-			    		<input id="StartColor" type="text" placeholder="hex code" value="#A7C8D9">
+		    			<span>Exits: </span>
+						<ul id="exitList"></ul>
 		    		</div>
 		    		<div>
-			    		<span>End color: </span>
-			    		<input id="EndColor" type="text" placeholder="hex code" value="#D9B166">
+		    			<div id="addNewExit" style="text-align: center;" class="shadow">Add New Exit</div>
 		    		</div>
-		    	</div>
-		    	<hr>
-		    	<div id="SizeBox">
-		    		<div>
-			    		<span>Width: </span>
-			    		<input id="Width" type="number" placeholder="integer" value="3000">
-		    		</div>
-		    		<div>
-			    		<span>Height: </span>
-			    		<input id="Height" type="number" placeholder="integer" value="1000">
-			    	</div>
 			    </div>
 			    <hr>
 		    	<div id="LayersBox">

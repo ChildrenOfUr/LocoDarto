@@ -57,10 +57,13 @@ body {
 	-moz-border-radius: 7px;
 	border-radius: 7px;
 	padding:5px;
-	overflow-y: scroll;
+	overflow-y: auto;
 }
-#ToolShelf {
-				
+#StatsBox td {
+	padding-right: 7px
+}
+#StatsBox input {
+	width: 60px;
 }
 #Palette {
 	position: absolute;
@@ -76,11 +79,31 @@ body {
 	height: calc(100% - 2em);
 	overflow-y: scroll;
 }
+#exitList {
+	border: 1px solid black;
+	max-height: 150px;
+	min-height: 1em;
+	padding: 5px;
+	margin: 3px;
+	overflow-y: auto;
+}
+#exitList input {
+	width: 120px;
+	margin-right: 5px;
+}
+.deleteButton {
+	height: 1em;
+	margin-right: 5px;
+	position: relative;
+	top: 3px;
+}
 #layerList {
 	border: 1px solid black;
 	max-height: 150px;
 	min-height: 1em;
 	padding: 5px;
+	margin: 3px;
+	overflow-y: auto;
 }
 #layerList .dnd-placeholder {
 	border: 1px dashed #CCC;

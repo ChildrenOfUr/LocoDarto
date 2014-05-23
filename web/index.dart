@@ -127,6 +127,17 @@ main()
 		addNewLayer.classes.add("shadow");
 	});
     
+    DivElement addNewExit = querySelector("#addNewExit");
+    addNewExit.onMouseDown.listen((_)
+	{
+		addNewExit.classes.remove("shadow");
+	});
+    addNewExit.onMouseUp.listen((_)
+	{
+    	newExit();
+		addNewExit.classes.add("shadow");
+	});
+    
     DivElement deleteDeco = querySelector("#DeleteDeco");
     deleteDeco.onMouseDown.listen((_)
 	{
@@ -501,6 +512,28 @@ void repaint(CanvasElement lineCanvas, [Platform temporary])
 	context.stroke();
 }
 
+void newExit([String exitName])
+{
+	Element exitList = querySelector("#exitList");
+	
+	LIElement item = new LIElement();
+	ImageElement deleteButton = new ImageElement(src:"assets/images/delete.png")
+		..classes.add("deleteButton");
+	TextInputElement titleInput = new TextInputElement()
+		..classes.add("exitTitle")
+		..placeholder = "street name";
+	TextInputElement tsidInput = new TextInputElement()
+		..classes.add("exitTsid")
+		..placeholder = "tsid";
+	
+	deleteButton.onClick.first.then((_) => item.remove());
+	
+	item.append(deleteButton);
+	item.append(titleInput);
+	item.append(tsidInput);
+	exitList.append(item);
+}
+
 void newLayer([String layerName, bool loadStreet = false])
 {
 	Element layerList = querySelector("#layerList");
@@ -512,7 +545,7 @@ void newLayer([String layerName, bool loadStreet = false])
 	
 	DivElement layerTitle = new DivElement()..id = "title"..classes.add("layerTitle");
 	if(layerName == null)
-		layerName = "newLayer"+rand.nextInt(100000).toString();
+		layerName = "newLayer"+rand.nextInt(1000).toString();
 	
 	layerTitle.text = layerName;
     item.id = layerName;
@@ -652,7 +685,6 @@ Map generate()
 		layer["filters"] = {};
 		
 		List<Map> decosList = [];
-		Map<String,List<Deco>> decos = {};
 		layers.querySelector("#${layer["name"]}").children.forEach((ImageElement deco)
 		{
 			String filename = deco.src.substring(deco.src.lastIndexOf("/")+1,deco.src.lastIndexOf("."));
@@ -672,7 +704,16 @@ Map generate()
 			decosList.add(decoMap);
 		});
 		layer["decos"] = decosList;
-		layer["signposts"] = [];
+		
+		List<Map> signposts = [];
+		querySelector("#exitList").children.forEach((Element element)
+		{
+			TextInputElement exitTitle = element.querySelector(".exitTitle");
+			TextInputElement exitTsid = element.querySelector(".exitTsid");
+        	signposts.add({"connects":[{"label":exitTitle.value,"tsid":exitTsid.value}]});
+		});
+		layer["signposts"] = signposts;
+		
 		List platforms = [];
 		if(currentStreet != null)
 		{
