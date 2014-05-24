@@ -20,7 +20,7 @@ TextInputElement startColorInput, endColorInput, locationInput;
 NumberInputElement widthInput, heightInput;
 DivElement location;
 String startColor, endColor, currentLayer = "middleground";
-int width = 3000 , height = 1000, decoLoadOffset = 0;
+int width = 3000 , height = 1000;
 DivElement gameScreen, layers;
 Rectangle bounds;
 Random rand = new Random();
@@ -204,28 +204,34 @@ main()
     });
     
     DivElement palette = querySelector("#Palette");
-    DivElement shelf = querySelector("#Shelf");
     ButtonElement loadAll = querySelector("#LoadAllDecos") as ButtonElement;
-   
-    loadDecos(shelf);
-    StreamSubscription scrollLoader = shelf.onScroll.listen((_)
+    loadDecos(querySelector("#DecoShelf"));
+    loadDecos(querySelector("#SpritesheetShelf"));
+    
+    StreamSubscription scrollLoader = querySelectorAll(".shelf").onScroll.listen((_)
     {
+    	String activeShelf = querySelector("input[name='paletteGroup']:checked").id;
+    	Element shelf = querySelector("#${activeShelf}Shelf");
     	if((shelf.scrollHeight - shelf.offsetHeight - shelf.scrollTop).abs() < 50)
     	{
-    		loadDecos(shelf, offset:decoLoadOffset);
+    		loadDecos(shelf, offset:int.parse(shelf.attributes["loadOffset"]));
     	}
     });
     
     loadAll.onClick.first.then((_)
     {
     	loadAll.disabled = true;
-    	loadDecos(shelf,length:-1,offset:decoLoadOffset);
+    	Element decoShelf = querySelector("#DecoShelf");
+    	Element spritesheetShelf = querySelector("#SpritesheetShelf");
+    	loadDecos(decoShelf,length:-1,offset:int.parse(decoShelf.attributes["loadOffset"]));
+    	loadDecos(spritesheetShelf,length:-1,offset:int.parse(spritesheetShelf.attributes["loadOffset"]));
     	scrollLoader.cancel();
     	querySelector("#ScrollToLoad").hidden = true;
     });
     
     TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
     paletteFilter.onInput.listen((_) => filterPalette());
+    paletteFilter.onChange.listen((_) => filterPalette(doSearch:true));
     
     ui.init();
     playerInput = new Input();
@@ -239,60 +245,85 @@ main()
 }
 
 //dir is the name of the directory relative to listSprites.php from which to load images
-void loadDecos(Element container, {String dir:"scenery", int offset:0, length:100})
+void loadDecos(Element container, {int offset:0, int length:100, String search:"-1"})
 {
-    HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&offset=$offset&length=$length").then((String result)
+	String dir = container.attributes["dir"];
+    HttpRequest.getString("http://childrenofur.com/locodarto/listSprites.php?dir=$dir&search=$search&offset=$offset&length=$length").then((String result)
     {
     	List results = JSON.decode(result);
     	results.forEach((String spriteUrl)
 		{
-    		ImageElement deco = new ImageElement();
-    		deco.title = spriteUrl.substring(spriteUrl.lastIndexOf("/")+1);
-    		deco.classes.add("paletteItem");
-			deco.src = spriteUrl;
-        	deco.style.maxWidth = "50px";
-        	deco.style.maxHeight = "100px";
-        	container.append(deco);
-        	setupListener(deco);
+    		String title = spriteUrl.substring(spriteUrl.lastIndexOf("/")+1,spriteUrl.lastIndexOf("."));
+    		if(querySelector("#$title") == null)
+			{
+    			ImageElement deco = new ImageElement();
+        		deco.title = title;
+        		deco.id = title;
+        		deco.classes.add("paletteItem");
+    			deco.src = spriteUrl;
+            	deco.style.maxWidth = "50px";
+            	deco.style.maxHeight = "100px";
+            	container.append(deco);
+            	setupListener(deco);
+			}
 		});
+    	
+    	filterPalette();
     });
     
     if(length >= 0)
-    	decoLoadOffset += length;
+    {
+    	int loadOffset = int.parse(container.attributes["loadOffset"]);
+    	loadOffset += length;
+    	container.attributes["loadOffset"] = loadOffset.toString();
+    }
 }
 
-void filterPalette()
+void filterPalette({bool doSearch:false})
 {
 	DivElement palette = querySelector("#Palette");
-	TextInputElement paletteFilter = querySelector("#PaletteFilter") as TextInputElement;
-	if(paletteFilter.value != "")
+    TextInputElement paletteFilter = querySelector("#PaletteFilter");
+    	
+	//search server for unloaded items that match the current filter
+    if(doSearch && paletteFilter.value.trim() != "")
+    {
+    	String activeShelf = querySelector("input[name='paletteGroup']:checked").id;
+        Element shelf = querySelector("#${activeShelf}Shelf");
+    	loadDecos(shelf,search:paletteFilter.value);	
+    }
+	
+	palette.querySelectorAll(".paletteItem").forEach((Element deco)
 	{
-		palette.querySelectorAll(".paletteItem").forEach((Element deco)
-		{
-			if(deco.title.contains(paletteFilter.value))
-				deco.style.display = "inline";
-			else
-				deco.style.display = "none";
-		});
-	}
+		if(paletteFilter.value.trim() == "")
+			deco.style.display = "inline";
+		else if(deco.title.toLowerCase().contains(paletteFilter.value.toLowerCase()))
+			deco.style.display = "inline";
+		else
+			deco.style.display = "none";
+	});		
 }
 
 void setupListener(ImageElement deco)
 {
 	deco.onClick.listen((MouseEvent event)
 	{
+		querySelectorAll(".deco").forEach((Element e)
+		{
+			e.classes.remove("dashedBorder");
+			querySelector("#DecoDetails").hidden = true;
+		});
 		StreamSubscription moveListener, clickListener;
 		
 		ImageElement drag = new ImageElement(src:deco.src);
 		drag.style.position = "absolute";
-		drag.style.top = event.client.y.toString()+"px";
+		drag.style.top = (event.client.y-drag.naturalHeight).toString()+"px";
 		drag.style.left = event.client.x.toString()+"px";
 		drag.classes.add("dashedBorder");
 		document.body.append(drag);
 		
 		Element layer = querySelector("#$currentLayer");
 		clickListener = layers.onClick.listen((MouseEvent event)
-    	{
+    	{			
 			num x,y;
 			//if we clicked on another deco inside the target layer
     		if((event.target as Element).id != layer.id)
@@ -306,23 +337,23 @@ void setupListener(ImageElement deco)
     			y = event.layer.y+currentStreet.offsetY[currentLayer];
     			x = event.layer.x+currentStreet.offsetX[currentLayer];
     		}
-    		drag.style.top = y.toString()+"px";
+    		drag.style.top = (y-drag.clientHeight).toString()+"px";
             drag.style.left = x.toString()+"px";
             drag.classes.add("deco");
             drag.classes.remove("dashedBorder");
             drag.onClick.listen((_) => editDetails(drag));
             
-            layer.append(drag);            
+            layer.append(drag);
+            editDetails(drag);
+
             moveListener.cancel();
             clickListener.cancel();
-            
-            editDetails(drag);
     	});
 		
 		moveListener = document.body.onMouseMove.listen((MouseEvent event)
     	{
-    		drag.style.top = (event.page.y+1).toString()+"px";
-            drag.style.left = event.page.x.toString()+"px";
+    		drag.style.top = (event.page.y-drag.clientHeight).toString()+"px";
+            drag.style.left = (event.page.x+1).toString()+"px";
     	});
 	});
 }
@@ -371,11 +402,23 @@ void editDetails(ImageElement clone)
 		InputElement wInput = (querySelector("#DecoW") as InputElement);
         wInput.value = clone.style.maxWidth.replaceAll("px", "");
         wInput.placeholder = "default: " + clone.naturalWidth.toString();
-        wInputListener = wInput.onInput.listen((_) => clone.style.maxWidth = wInput.value +"px");
+        wInputListener = wInput.onInput.listen((_)
+        {
+        	if(wInput.value == "")
+        		clone.style.maxWidth = clone.naturalWidth.toString() + "px";
+        	else
+        		clone.style.maxWidth = wInput.value +"px";
+        });
         InputElement hInput = (querySelector("#DecoH") as InputElement);
         hInput.value = clone.style.maxHeight.replaceAll("px", "");
         hInput.placeholder = "default: " + clone.naturalHeight.toString();
-        hInputListener = hInput.onInput.listen((_) => clone.style.maxHeight = hInput.value +"px");
+        hInputListener = hInput.onInput.listen((_)
+        {
+        	if(hInput.value == "")
+        		clone.style.maxHeight = clone.naturalHeight.toString() + "px";
+        	else
+        		clone.style.maxHeight = hInput.value +"px";
+        });
         
         InputElement rotateInput = (querySelector("#DecoRotate") as InputElement);
         rotateInput.value = getTransformAngle(clone.getComputedStyle().transform).toString();

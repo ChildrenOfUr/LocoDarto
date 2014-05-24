@@ -24,7 +24,7 @@ body {
 #GameScreenParent {
 	position: relative;
 	width: calc(100% - 290px - 40px - 18px - 20px);
-	height: calc(100% - 220px);
+	height: calc(100% - 260px);
 	max-height: 900px;
 	top: 25px;
 	left: 10px;
@@ -69,15 +69,20 @@ body {
 	position: absolute;
 	bottom: 0px;
 	left: 10px;
-	height: 165px;
+	height: 205px;
 	width: calc(100% - 290px - 40px - 18px - 20px);
 }
 #PaletteFilter {
 	display: inline-block;
+	width: 260px;
 }
-#Shelf {
-	height: calc(100% - 2em);
-	overflow-y: scroll;
+#DecoShelf {
+	height: 100%;
+	overflow-y: auto;
+}
+#SpritesheetShelf {
+	height: 100%;
+	overflow-y: auto;
 }
 #exitList {
 	border: 1px solid black;
@@ -237,4 +242,43 @@ body {
 }
 #DecoLoadingStatus {
 	white-space: nowrap;
+}
+.tabs {
+  position: relative;
+  height: calc(100% - 2em);
+}
+.tab {
+  float: left;
+  cursor: pointer;
+}
+.tab label {
+	background: #eee; 
+	padding: 4px; 
+	border: 1px solid #ccc; 
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	margin-left: -1px;
+	position: relative;
+	left: 1px;
+	top: 5px;
+}
+.tab [type=radio] {
+  display: none;   
+}
+.content {
+  position: absolute;
+  height: calc(100% - 2em);
+  top: 28px;
+  left: 0;
+  right: 0;
+  display: none;
+}
+[type=radio]:checked ~ label {
+  background: white;
+  border-bottom: 1px solid white;
+  z-index: 2;
+}
+[type=radio]:checked ~ label ~ .content {
+  z-index: 1;
+  display: block;
 }

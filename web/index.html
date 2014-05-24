@@ -116,11 +116,25 @@
 	    </div>
 	    <div id="Palette">
 	    	<span>Palette</span>
-	    	<input id="PaletteFilter" type="text" placeholder="filter">
+	    	<input id="PaletteFilter" type="text" placeholder="Filter options (press enter to search server)">
 	    	<button id="LoadAllDecos">Load all (warning, slow!)</button>
 	    	<span id="ScrollToLoad">Scroll Down to load more</span>
-	    	<div></div>
-	    <div id="Shelf"></div>
+	    	<div class="tabs">
+			   <div class="tab">
+			       <input type="radio" id="Deco" name="paletteGroup" checked>
+			       <label for="Deco">Decos</label>
+			       <div class="content">
+			           <div id="DecoShelf" class="shelf" loadOffset="0" dir="scenery"></div>
+			       </div> 
+			   </div>
+			   <div class="tab">
+			       <input type="radio" id="Spritesheet" name="paletteGroup">
+			       <label for="Spritesheet">Spritesheets</label>
+			       <div class="content">
+			           <div id="SpritesheetShelf" class="shelf" loadOffset="0" dir="spritesheets"></div>
+			       </div> 
+			   </div>
+			</div>
 	    </div>
   	</div>
     

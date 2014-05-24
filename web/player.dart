@@ -36,6 +36,7 @@ class Player
 		}
 
 		playerCanvas = new DivElement()
+			..style.pointerEvents = "none"
 			..style.display = "inline-block"
 			..style.textAlign = "center";
 		
