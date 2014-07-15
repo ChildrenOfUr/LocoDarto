@@ -17,6 +17,10 @@
 	  	<form style="display: inline;">
 	  		<input id="fileLoad" type="file">
 	  	</form>
+	  	<form style="display: inline;" id="LocationCodeForm">
+	  		<input type="text" id="LocationCodeInput" placeholder="enter location code to load">
+	  		<input type="button" id="LocationCodeButton" value="Load">
+	  	</form>
   		<label><input id="gravity" type="checkbox" checked="true">Gravity on</label>
 	  	<div id="GameScreenParent">
 		  	<div id="CurrentLocation">
@@ -137,6 +141,14 @@
 			</div>
 	    </div>
   	</div>
+  	
+  	<!--Necessary to get around Cross-Domain stuff-->
+	<script type="text/javascript">
+	function getRoom(dataJSON)
+	{
+		window.postMessage(JSON.stringify(dataJSON), '*');
+	}
+	</script>
     
     
     <script type="application/dart" src="index.dart"></script>

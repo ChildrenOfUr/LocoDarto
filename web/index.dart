@@ -197,6 +197,19 @@ main()
 		fileLoad.blur();
 	});
     
+    querySelector('#LocationCodeForm').onSubmit.listen((Event e)
+    {
+    	e.preventDefault();
+    	loadLocationJson();
+    });
+    
+    querySelector("#LocationCodeButton").onClick.listen((_) => loadLocationJson());
+    
+    window.onMessage.listen((MessageEvent event)
+	{
+		loadStreet(JSON.decode(event.data));
+	});
+    
     CheckboxInputElement gravity = querySelector("#gravity") as CheckboxInputElement;
     gravity.onChange.listen((_)
     {
@@ -242,6 +255,20 @@ main()
     	CurrentPlayer = new Player();
 		CurrentPlayer.loadAnimations().then((_) => gameLoop(0.0));
     });
+}
+
+void loadLocationJson()
+{
+	String location = (querySelector("#LocationCodeInput") as TextInputElement).value;
+	if(location != "")
+	{
+		if(location.startsWith("L"))
+			location = location.replaceFirst("L", "G");
+		String url = "http://RobertMcDermot.github.io/CAT422-glitch-location-viewer/locations/$location.callback.json";
+		ScriptElement loadStreet = new ScriptElement();
+		loadStreet.src = url;
+        document.body.append(loadStreet);
+	}
 }
 
 //dir is the name of the directory relative to listSprites.php from which to load images
